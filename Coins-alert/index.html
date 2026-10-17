@@ -17,7 +17,7 @@
     .form-group { margin-bottom: 15px; }
     label { display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600; color: #cbd5e1; }
     input[type="number"], input[type="text"], input[type="email"] { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; }
-    .checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 14px;}
+    .checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 14px; }
     button { width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
     .btn-start { background: var(--accent); color: #fff; }
     .btn-start:hover { background: #059669; }
@@ -25,13 +25,13 @@
     .btn-stop:hover { background: #dc2626; }
     .panel { background: var(--panel); padding: 20px; border-radius: 12px; border: 1px solid var(--border); }
     .terminal { background: #000; color: #10b981; font-family: monospace; padding: 15px; border-radius: 8px; height: 300px; overflow-y: auto; font-size: 13px; }
-    .terminal p { margin: 2px 0; }
+    .terminal p { margin: 3px 0; }
     .term-reject { color: var(--danger); }
     .term-alert { color: #fff; background: var(--accent); padding: 2px 5px; border-radius: 3px; font-weight: bold; }
     table { width: 100%; border-collapse: collapse; }
     th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); }
     th { color: #94a3b8; font-size: 14px; }
-    a { color: #38bdf8; text-decoration: none; font-weight: bold; }
+    a { color: #38bdf8; text-decoration: none; font-weight: bold; margin-right: 8px; }
     a:hover { text-decoration: underline; }
   </style>
 </head>
@@ -50,7 +50,7 @@
       </div>
       <div class="form-group">
         <label>Max FDV (USD)</label>
-        <input type="number" id="maxFdv" value="10000">
+        <input type="number" id="maxFdv" value="15000">
       </div>
 
       <h3>2. Photon (Safety)</h3>
@@ -91,7 +91,7 @@
               <th>Contract</th>
               <th>Liquidity</th>
               <th>FDV</th>
-              <th>Action</th>
+              <th>Live Charts (No 404)</th>
             </tr>
           </thead>
           <tbody id="resultsTable">
@@ -102,7 +102,7 @@
       <div class="panel">
         <h3>Live Scan Terminal</h3>
         <div class="terminal" id="terminalLog">
-          <p>> System ready. Awaiting connection...</p>
+          <p>> System ready. Click START MONITOR to begin...</p>
         </div>
       </div>
     </div>
@@ -111,6 +111,22 @@
   <script>
     let ws;
     let isScanning = false;
+
+    // Built-in Web Audio API beep (Zero external sound files to 404)
+    function playAlertBeep() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+      } catch (e) {}
+    }
 
     function logTerminal(msg, type = "normal") {
       const term = document.getElementById("terminalLog");
@@ -122,40 +138,71 @@
     }
 
     function sendEmailAlert(token) {
-      const pubKey = document.getElementById("emailjsKey").value;
-      const targetEmail = document.getElementById("targetEmail").value;
-      
-      if (!pubKey || !targetEmail) return;
+      const pubKey = document.getElementById("emailjsKey").value.trim();
+      const targetEmail = document.getElementById("targetEmail").value.trim();
+      if (!pubKey || !targetEmail || typeof emailjs === "undefined") return;
 
       emailjs.init(pubKey);
       const templateParams = {
         token_symbol: token.symbol,
         token_address: token.mint,
         liquidity: `$${token.liquidity.toLocaleString()}`,
-        link: `https://photon-sol.tinyastro.io/en/lp/${token.mint}`,
+        link: `https://pump.fun/coin/${token.mint}`,
         to_email: targetEmail
       };
 
       emailjs.send("default_service", "template_coinsalert", templateParams)
         .then(() => logTerminal(`[EMAIL] Alert dispatched to ${targetEmail}`, "alert"))
-        .catch(err => logTerminal(`[EMAIL ERROR] Failed to send`, "reject"));
+        .catch(() => logTerminal(`[EMAIL ERROR] Check your EmailJS keys`, "reject"));
     }
 
     function addRow(token) {
       const tbody = document.getElementById("resultsTable");
       const tr = document.createElement("tr");
+      // Direct links to Pump.fun, GMGN, and DEX Screener search so brand-new tokens never 404
       tr.innerHTML = `
         <td><strong>${token.symbol}</strong></td>
         <td style="font-family: monospace; font-size:12px;">${token.mint.substring(0,6)}...${token.mint.slice(-4)}</td>
         <td>$${token.liquidity.toLocaleString()}</td>
         <td>$${token.fdv.toLocaleString()}</td>
         <td>
-          <a href="https://photon-sol.tinyastro.io/en/lp/${token.mint}" target="_blank">Photon</a> | 
+          <a href="https://pump.fun/coin/${token.mint}" target="_blank">Pump.fun</a>
+          <a href="https://gmgn.ai/sol/token/${token.mint}" target="_blank">Photon/GMGN</a>
           <a href="https://dexscreener.com/solana/${token.mint}" target="_blank">DEX</a>
         </td>
       `;
       tbody.prepend(tr);
-      new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg").play().catch(()=>{});
+      playAlertBeep();
+    }
+
+    function processTokenData(data) {
+      if (!data.mint) return;
+
+      const minLiq = parseInt(document.getElementById("minLiq").value) || 4000;
+      const maxFdv = parseInt(document.getElementById("maxFdv").value) || 15000;
+
+      const solPrice = 145;
+      const marketCapUSD = (data.marketCapSol || 30) * solPrice;
+
+      const token = {
+        symbol: data.symbol || "TKN",
+        mint: data.mint,
+        liquidity: Math.floor(marketCapUSD * 1.2),
+        fdv: Math.floor(marketCapUSD)
+      };
+
+      if (token.liquidity < minLiq) {
+        logTerminal(`[REJECT] ${token.symbol} | Liq: $${token.liquidity.toLocaleString()} (Below Min $${minLiq.toLocaleString()})`, "reject");
+        return;
+      }
+      if (token.fdv > maxFdv) {
+        logTerminal(`[REJECT] ${token.symbol} | FDV: $${token.fdv.toLocaleString()} (Above Max $${maxFdv.toLocaleString()})`, "reject");
+        return;
+      }
+
+      logTerminal(`[ALERT] VERIFIED PAIR FOUND: ${token.symbol} (${token.mint})`, "alert");
+      addRow(token);
+      sendEmailAlert(token);
     }
 
     function startScanner() {
@@ -164,53 +211,44 @@
       document.getElementById("startBtn").style.display = "none";
       document.getElementById("stopBtn").style.display = "block";
 
-      const minLiq = parseInt(document.getElementById("minLiq").value);
-      const maxFdv = parseInt(document.getElementById("maxFdv").value);
-
       logTerminal("> Connecting to Solana Mempool WebSocket...");
-      ws = new WebSocket("wss://pumpportal.fun/api/data");
+      
+      try {
+        ws = new WebSocket("wss://pumpportal.fun/api/data");
 
-      ws.onopen = () => {
-        logTerminal("> WebSocket Connected. Subscribing to new token events...", "alert");
-        ws.send(JSON.stringify({ method: "subscribeNewToken" }));
-      };
-
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (!data.mint) return;
-
-        const solPrice = 145;
-        const marketCapUSD = (data.marketCapSol || 30) * solPrice;
-
-        const token = {
-          symbol: data.symbol || "TKN",
-          mint: data.mint,
-          liquidity: Math.floor(marketCapUSD * 1.2),
-          fdv: Math.floor(marketCapUSD)
+        ws.onopen = () => {
+          logTerminal("> WebSocket Connected. Listening for live token launches...", "alert");
+          ws.send(JSON.stringify({ method: "subscribeNewToken" }));
         };
 
-        if (token.liquidity < minLiq) {
-          logTerminal(`[REJECT] ${token.symbol} | Liq: $${token.liquidity} (Failed DEX Screener)`, "reject");
-          return;
-        }
-        if (token.fdv > maxFdv) {
-          logTerminal(`[REJECT] ${token.symbol} | FDV: $${token.fdv} (Failed DEX Screener)`, "reject");
-          return;
-        }
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            processTokenData(data);
+          } catch (e) {}
+        };
 
-        logTerminal(`[ALERT] VERIFIED PAIR FOUND: ${token.symbol}`, "alert");
-        addRow(token);
-        sendEmailAlert(token);
-      };
+        ws.onerror = () => {
+          logTerminal("> [WARNING] Live stream blocked or rate-limited by browser.", "reject");
+        };
+
+        ws.onclose = () => {
+          if (isScanning) {
+            logTerminal("> Stream closed. Reconnecting in 3 seconds...", "reject");
+            setTimeout(() => { if (isScanning) startScanner(); }, 3000);
+          }
+        };
+      } catch (err) {
+        logTerminal("> Connection failed: " + err.message, "reject");
+      }
     }
 
     function stopScanner() {
-      if (!isScanning) return;
       isScanning = false;
       document.getElementById("startBtn").style.display = "block";
       document.getElementById("stopBtn").style.display = "none";
       if (ws) ws.close();
-      logTerminal("> Scanner disconnected.");
+      logTerminal("> Scanner stopped.");
     }
   </script>
 </body>
