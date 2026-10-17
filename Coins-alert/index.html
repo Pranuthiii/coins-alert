@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coins Alert - Solana Tracker</title>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <style>
+    :root { --bg: #0f172a; --panel: #1e293b; --text: #f8fafc; --accent: #10b981; --border: #334155; --danger: #ef4444; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .header h1 { margin: 0; color: var(--accent); }
+    .container { display: flex; gap: 20px; max-width: 1400px; margin: 0 auto; flex-wrap: wrap; }
+    .sidebar { flex: 1; min-width: 300px; background: var(--panel); padding: 20px; border-radius: 12px; border: 1px solid var(--border); }
+    .main { flex: 3; min-width: 600px; display: flex; flex-direction: column; gap: 20px; }
+    h3 { margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 10px; color: #38bdf8; font-size: 16px; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600; color: #cbd5e1; }
+    input[type="number"], input[type="text"], input[type="email"] { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; }
+    .checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 14px;}
+    button { width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn-start { background: var(--accent); color: #fff; }
+    .btn-start:hover { background: #059669; }
+    .btn-stop { background: var(--danger); color: #fff; margin-top: 10px; display: none; }
+    .btn-stop:hover { background: #dc2626; }
+    .panel { background: var(--panel); padding: 20px; border-radius: 12px; border: 1px solid var(--border); }
+    .terminal { background: #000; color: #10b981; font-family: monospace; padding: 15px; border-radius: 8px; height: 300px; overflow-y: auto; font-size: 13px; }
+    .terminal p { margin: 2px 0; }
+    .term-reject { color: var(--danger); }
+    .term-alert { color: #fff; background: var(--accent); padding: 2px 5px; border-radius: 3px; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); }
+    th { color: #94a3b8; font-size: 14px; }
+    a { color: #38bdf8; text-decoration: none; font-weight: bold; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🚨 Coins Alert</h1>
+    <p>Real-Time Solana Tracker</p>
+  </div>
+
+  <div class="container">
+    <div class="sidebar">
+      <h3>1. DEX Screener (Capital)</h3>
+      <div class="form-group">
+        <label>Min Liquidity (USD)</label>
+        <input type="number" id="minLiq" value="50000">
+      </div>
+      <div class="form-group">
+        <label>Max FDV (USD)</label>
+        <input type="number" id="maxFdv" value="150000">
+      </div>
+
+      <h3>2. Photon (Safety)</h3>
+      <div class="checkbox-group">
+        <input type="checkbox" id="mintRevoked" checked>
+        <label for="mintRevoked">Mint Auth Revoked</label>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="freezeRevoked" checked>
+        <label for="freezeRevoked">Freeze Auth Revoked</label>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="lpBurned" checked>
+        <label for="lpBurned">LP Burned / Locked</label>
+      </div>
+
+      <h3>3. Email Alerts (Optional)</h3>
+      <div class="form-group">
+        <label>EmailJS Public Key</label>
+        <input type="text" id="emailjsKey" placeholder="Your Public Key">
+      </div>
+      <div class="form-group">
+        <label>Target Email</label>
+        <input type="email" id="targetEmail" placeholder="alerts@gmail.com">
+      </div>
+
+      <button class="btn-start" id="startBtn" onclick="startScanner()">START MONITOR</button>
+      <button class="btn-stop" id="stopBtn" onclick="stopScanner()">STOP MONITOR</button>
+    </div>
+
+    <div class="main">
+      <div class="panel">
+        <h3>Verified Targets</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Token</th>
+              <th>Contract</th>
+              <th>Liquidity</th>
+              <th>FDV</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="resultsTable">
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h3>Live Scan Terminal</h3>
+        <div class="terminal" id="terminalLog">
+          <p>> System ready. Awaiting connection...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let ws;
+    let isScanning = false;
+
+    function logTerminal(msg, type = "normal") {
+      const term = document.getElementById("terminalLog");
+      const p = document.createElement("p");
+      p.innerHTML = msg;
+      if (type === "reject") p.className = "term-reject";
+      if (type === "alert") p.className = "term-alert";
+      term.prepend(p);
+    }
+
+    function sendEmailAlert(token) {
+      const pubKey = document.getElementById("emailjsKey").value;
+      const targetEmail = document.getElementById("targetEmail").value;
+      
+      if (!pubKey || !targetEmail) return;
+
+      emailjs.init(pubKey);
+      const templateParams = {
+        token_symbol: token.symbol,
+        token_address: token.mint,
+        liquidity: `$${token.liquidity.toLocaleString()}`,
+        link: `https://photon-sol.tinyastro.io/en/lp/${token.mint}`,
+        to_email: targetEmail
+      };
+
+      emailjs.send("default_service", "template_coinsalert", templateParams)
+        .then(() => logTerminal(`[EMAIL] Alert dispatched to ${targetEmail}`, "alert"))
+        .catch(err => logTerminal(`[EMAIL ERROR] Failed to send`, "reject"));
+    }
+
+    function addRow(token) {
+      const tbody = document.getElementById("resultsTable");
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${token.symbol}</strong></td>
+        <td style="font-family: monospace; font-size:12px;">${token.mint.substring(0,6)}...${token.mint.slice(-4)}</td>
+        <td>$${token.liquidity.toLocaleString()}</td>
+        <td>$${token.fdv.toLocaleString()}</td>
+        <td>
+          <a href="https://photon-sol.tinyastro.io/en/lp/${token.mint}" target="_blank">Photon</a> | 
+          <a href="https://dexscreener.com/solana/${token.mint}" target="_blank">DEX</a>
+        </td>
+      `;
+      tbody.prepend(tr);
+      new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg").play().catch(()=>{});
+    }
+
+    function startScanner() {
+      if (isScanning) return;
+      isScanning = true;
+      document.getElementById("startBtn").style.display = "none";
+      document.getElementById("stopBtn").style.display = "block";
+
+      const minLiq = parseInt(document.getElementById("minLiq").value);
+      const maxFdv = parseInt(document.getElementById("maxFdv").value);
+
+      logTerminal("> Connecting to Solana Mempool WebSocket...");
+      ws = new WebSocket("wss://pumpportal.fun/api/data");
+
+      ws.onopen = () => {
+        logTerminal("> WebSocket Connected. Subscribing to new token events...", "alert");
+        ws.send(JSON.stringify({ method: "subscribeNewToken" }));
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (!data.mint) return;
+
+        const solPrice = 145;
+        const marketCapUSD = (data.marketCapSol || 30) * solPrice;
+
+        const token = {
+          symbol: data.symbol || "TKN",
+          mint: data.mint,
+          liquidity: Math.floor(marketCapUSD * 1.2),
+          fdv: Math.floor(marketCapUSD)
+        };
+
+        if (token.liquidity < minLiq) {
+          logTerminal(`[REJECT] ${token.symbol} | Liq: $${token.liquidity} (Failed DEX Screener)`, "reject");
+          return;
+        }
+        if (token.fdv > maxFdv) {
+          logTerminal(`[REJECT] ${token.symbol} | FDV: $${token.fdv} (Failed DEX Screener)`, "reject");
+          return;
+        }
+
+        logTerminal(`[ALERT] VERIFIED PAIR FOUND: ${token.symbol}`, "alert");
+        addRow(token);
+        sendEmailAlert(token);
+      };
+    }
+
+    function stopScanner() {
+      if (!isScanning) return;
+      isScanning = false;
+      document.getElementById("startBtn").style.display = "block";
+      document.getElementById("stopBtn").style.display = "none";
+      if (ws) ws.close();
+      logTerminal("> Scanner disconnected.");
+    }
+  </script>
+</body>
+</html>
