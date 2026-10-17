@@ -8,8 +8,8 @@ const APP_PASSWORD = process.env.APP_PASSWORD || 'YOUR_GMAIL_APP_PASSWORD';
 const ALERT_RECIPIENT = process.env.ALERT_RECIPIENT || 'YOUR_EMAIL@gmail.com';
 
 const FILTERS = {
-  minLiquidityUSD: 50000,
-  maxFdvUSD: 150000,
+  minLiquidityUSD: 4000,   // Lowered to catch new Pump.fun launches
+  maxFdvUSD: 10000,        // Lowered to catch new Pump.fun launches
   requireMintDisabled: true,
   requireFreezeDisabled: true,
   requireLpBurned: true
@@ -41,13 +41,14 @@ function connectStream() {
       const solPrice = 145; // Approximate SOL price
       const marketCapUSD = (data.marketCapSol || 30) * solPrice;
 
-      // Simulated security parameters for the stream
+      // NOTE: Security parameters are simulated for this free stream.
+      // Live on-chain verification requires a paid RPC provider.
       const token = {
         name: data.name || 'Unknown',
         symbol: data.symbol || 'TKN',
         mint: data.mint,
         liquidity: Math.floor(marketCapUSD * 1.2),
-        fdv: marketCapUSD,
+        fdv: Math.floor(marketCapUSD),
         mintDisabled: true, 
         freezeDisabled: true,
         lpBurned: true
