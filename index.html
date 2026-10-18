@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>Coins Alert — DEX Monitor</title>
+<style>
+:root{color-scheme:dark;--bg:#080c16;--panel:#101727;--panel2:#151f32;--line:#27344b;--text:#edf3ff;--muted:#91a0b9;--green:#35d49a;--red:#ff6b78;--amber:#ffc66d;--blue:#7ba7ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top left,#14203a 0,#080c16 42%);color:var(--text);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}button,input,select{font:inherit}button{cursor:pointer;border:1px solid var(--line);background:#1b2940;color:var(--text);padding:9px 12px;border-radius:9px}button:hover{border-color:var(--blue)}a{color:#9fc0ff;text-decoration:none}a:hover{text-decoration:underline}.layout{display:grid;grid-template-columns:300px minmax(0,1fr);min-height:100vh}.sidebar{padding:22px;border-right:1px solid var(--line);background:#0b1120d9}.brand{display:flex;gap:12px;align-items:center;margin-bottom:24px}.logo{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#65a4ff,#7c5cff);font-weight:900;color:#fff;font-size:19px}.brand h1{font-size:17px;margin:0}.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}.section{border-top:1px solid var(--line);padding-top:17px;margin-top:18px}.section h2{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#a7b6ce;margin:0 0 13px}.field{display:block;margin:0 0 14px}.field span{display:flex;justify-content:space-between;color:#c3cde0;margin-bottom:6px;font-size:12px}.field input,.field select{width:100%;background:#0a1120;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:10px;outline:none}.field input:focus,.field select:focus{border-color:var(--blue)}.toggle{display:flex;gap:9px;align-items:center;color:#d6deed;font-size:12px;margin:10px 0 14px}.toggle input{accent-color:var(--green)}.hint{font-size:11px;color:var(--muted);margin-top:7px}.actions{display:flex;gap:8px}.actions button{flex:1}.primary{background:#3869db;border-color:#3869db}.main{padding:24px;min-width:0}.topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:22px}.eyebrow{color:var(--green);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}.topbar h2{font-size:25px;margin:4px 0}.sub{color:var(--muted);font-size:12px}.status{display:flex;align-items:center;gap:8px;background:#101a2a;border:1px solid var(--line);padding:9px 12px;border-radius:30px;color:#c7d2e5;font-size:12px}.dot{width:8px;height:8px;border-radius:50%;background:var(--amber)}.dot.live{background:var(--green);box-shadow:0 0 12px #35d49a66}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}.stat{padding:16px;background:linear-gradient(140deg,#131e31,#0e1626);border:1px solid var(--line);border-radius:13px}.stat span{font-size:11px;color:var(--muted)}.stat strong{display:block;font-size:24px;margin-top:5px;letter-spacing:-.04em}.stat small{color:var(--muted);font-size:11px}.panel{background:#0e1625dd;border:1px solid var(--line);border-radius:14px;margin-bottom:18px;overflow:hidden}.panelhead{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.panelhead h3{font-size:14px;margin:0}.panelhead p{font-size:11px;color:var(--muted);margin:4px 0 0}.pill{border:1px solid var(--line);border-radius:20px;padding:4px 8px;color:#c2cde0;font-size:10px}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:850px}th{text-align:left;color:#8494b0;font-size:10px;text-transform:uppercase;letter-spacing:.07em;font-weight:600;background:#111b2c}th,td{padding:12px 14px;border-bottom:1px solid #202b3f}td{font-size:12px;color:#d9e2f2}tbody tr:hover{background:#141f32}tbody tr:last-child td{border-bottom:0}.token{display:flex;gap:10px;align-items:center}.coinicon{width:30px;height:30px;border-radius:50%;background:#263754;display:grid;place-items:center;font-size:10px;font-weight:800;color:#c8d8ff}.token b{display:block;font-size:12px}.token small{display:block;color:var(--muted);margin-top:2px}.chain,.audit{display:inline-block;padding:4px 7px;border-radius:6px;font-size:10px;background:#202e45;color:#bdd0ef;white-space:nowrap}.audit.pass{background:#103c31;color:#6ce7ba}.audit.fail{background:#44202b;color:#ff9da6}.audit.pending{background:#41351f;color:#ffd68b}.empty{padding:35px 20px;text-align:center;color:var(--muted)}.empty strong{display:block;color:#dce5f5;margin-bottom:5px}.console{height:260px;overflow:auto;padding:0 16px 12px;font:11px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace}.log{padding:8px 0;border-bottom:1px solid #1b273a;display:grid;grid-template-columns:76px 58px minmax(0,1fr);gap:10px}.log time{color:#7486a4}.log .kind{color:var(--blue)}.log .kind.warn{color:var(--amber)}.log .kind.good{color:var(--green)}.log .kind.bad{color:var(--red)}.log .msg{color:#cbd6e8;overflow-wrap:anywhere}.footer{color:#657590;font-size:10px;margin:10px 0 0}.configgrid{display:grid;grid-template-columns:1fr;gap:9px}.configgrid input{width:100%;background:#0a1120;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:9px}.warning{padding:10px;border:1px solid #5b4828;background:#2b2418;border-radius:8px;color:#f3d39a;font-size:11px;line-height:1.5}.smallbtn{padding:6px 9px;font-size:11px}.mobiletop{display:none}
+@media(max-width:1000px){.layout{grid-template-columns:250px minmax(0,1fr)}.main{padding:18px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){.layout{display:block}.sidebar{border-right:0;border-bottom:1px solid var(--line)}.main{padding:14px}.stats{gap:8px}.stat{padding:12px}.stat strong{font-size:20px}.topbar h2{font-size:22px}.sidebar{padding:16px}.section{margin-top:14px}.log{grid-template-columns:60px 45px minmax(0,1fr);gap:6px}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+  <div class="brand"><div class="logo">◎</div><div><h1>COINS ALERT</h1><p>DEX Screener monitor</p></div></div>
+  <div class="warning">Live data only. This UI does not fabricate token metrics or audit results. For continuous monitoring, run <code>worker.js</code> on an always-on server and enter its API URL below.</div>
+  <div class="section"><h2>Market filters</h2>
+    <label class="field"><span>Chain</span><select id="chain"><option value="all">All chains</option><option value="solana">Solana</option><option value="base">Base</option><option value="ethereum">Ethereum</option><option value="bsc">BSC</option></select></label>
+    <label class="field"><span>Minimum liquidity (USD)</span><input id="minLiquidity" type="number" min="0" step="100" value="10000"></label>
+    <label class="field"><span>Maximum FDV (USD)</span><input id="maxFdv" type="number" min="0" step="1000" value="1000000"></label>
+    <label class="field"><span>Maximum pair age (hours)</span><input id="maxAge" type="number" min="0.1" step="1" value="24"></label>
+    <label class="toggle"><input id="requireAudit" type="checkbox" checked> Require real security audit pass</label>
+    <div class="actions"><button class="primary" id="apply">Apply filters</button><button id="clear">Clear</button></div>
+  </div>
+  <div class="section"><h2>Worker connection</h2>
+    <label class="field"><span>Worker API base URL</span><input id="apiBase" placeholder="https://your-worker.example.com"></label>
+    <label class="field"><span>Worker bearer token (if enabled)</span><input id="apiToken" type="password" autocomplete="off" placeholder="Optional API_BEARER_TOKEN"></label>
+    <button class="primary" id="connect" style="width:100%">Connect to worker</button>
+    <p class="hint">Do not paste private API keys here. The worker API should be protected with network controls or a reverse-proxy access layer if publicly exposed.</p>
+  </div>
+  <div class="section"><h2>Notifications</h2>
+    <label class="field"><span>Webhook URL (optional)</span><input id="webhook" type="url" placeholder="https://..."></label>
+    <label class="field"><span>EmailJS public key (optional)</span><input id="emailPublic" placeholder="Public key"></label>
+    <label class="field"><span>EmailJS service ID</span><input id="emailService" placeholder="service_..."></label>
+    <label class="field"><span>EmailJS template ID</span><input id="emailTemplate" placeholder="template_..."></label>
+    <label class="field"><span>Notification recipient</span><input id="emailTo" type="email" placeholder="you@example.com"></label>
+    <label class="toggle"><input id="sound" type="checkbox" checked> Browser sound alerts</label>
+    <button id="saveSettings" style="width:100%">Save settings</button>
+    <p class="hint">Webhook notifications are sent by the worker using WEBHOOK_URL. EmailJS sends browser-side alerts when all four fields are set; use only the EmailJS public key, never a private secret. Your EmailJS template should accept the parameter names shown in the email payload.</p>
+  </div>
+  <p class="footer">DEX Screener public API • Data may be delayed or unavailable. Not financial advice.</p>
+</aside>
+<main class="main">
+  <div class="topbar"><div><div class="eyebrow">REAL-TIME TOKEN INTELLIGENCE</div><h2>Market monitor</h2><div class="sub">Newly discovered tokens · live pair metrics · on-chain risk checks</div></div><div class="status"><span class="dot" id="liveDot"></span><span id="connectionStatus">Worker not connected</span><button class="smallbtn" id="refresh">Refresh</button></div></div>
+  <div class="stats">
+    <div class="stat"><span>DISCOVERED TOKENS</span><strong id="discovered">—</strong><small>Unique addresses this worker session</small></div>
+    <div class="stat"><span>FILTER MATCHES</span><strong id="matches">—</strong><small>Current filters applied</small></div>
+    <div class="stat"><span>AUDIT PASSES</span><strong id="audits">—</strong><small>Confirmed by a security provider</small></div>
+    <div class="stat"><span>LAST POLL</span><strong id="lastPoll">—</strong><small id="pollSource">Awaiting worker status</small></div>
+  </div>
+  <section class="panel"><div class="panelhead"><div><h3>Live verified matches</h3><p>Chart links use the exact URL returned in the DEX Screener pair payload.</p></div><span class="pill" id="tableCount">0 MATCHES</span></div>
+    <div class="tablewrap"><table><thead><tr><th>Token</th><th>Chain</th><th>Liquidity</th><th>FDV</th><th>Pair age</th><th>24h volume</th><th>24h txns</th><th>Security audit</th><th>Chart</th></tr></thead><tbody id="tokenRows"><tr><td colspan="9"><div class="empty"><strong>No live worker data yet</strong>Connect this page to your running worker to load verified market data.</div></td></tr></tbody></table></div>
+  </section>
+  <section class="panel"><div class="panelhead"><div><h3>Live inspection console</h3><p>Each line records real discovery, hydration, audit and filter outcomes returned by the worker.</p></div><button id="clearLogs" class="smallbtn">Clear console</button></div><div id="console" class="console"><div class="empty">No inspection events received yet.</div></div></section>
+  <p class="footer">Security checks can fail or return unknown when a provider is unavailable. Unknown is never treated as a pass. This monitor is informational and does not guarantee a token is safe.</p>
+</main>
+</div>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const state = {tokens:[], logs:[], seenLogIds:new Set(), timer:null, lastUpdated:null, discovered:0};
+  const defaultSettings = {chain:'all',minLiquidity:'10000',maxFdv:'1000000',maxAge:'24',requireAudit:true,apiBase:'',apiToken:'',webhook:'',emailPublic:'',emailService:'',emailTemplate:'',emailTo:'',sound:true};
+  let settings = {...defaultSettings};
+  try { settings = {...settings, ...JSON.parse(localStorage.getItem('coins-alert-settings') || '{}')}; } catch {}
+  function loadSettings(){
+    for(const k of Object.keys(settings)){const el=$(k); if(el) {if(el.type==='checkbox') el.checked=!!settings[k]; else el.value=settings[k]??'';}}
+  }
+  function readSettings(){
+    for(const k of Object.keys(settings)){const el=$(k);if(el)settings[k]=el.type==='checkbox'?el.checked:el.value;}
+    localStorage.setItem('coins-alert-settings',JSON.stringify(settings));
+  }
+  function money(v){if(v===null||v===undefined||!Number.isFinite(Number(v)))return '—';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',notation:Math.abs(Number(v))>=1e6?'compact':'standard',maximumFractionDigits:Math.abs(Number(v))>=1000?1:2}).format(Number(v));}
+  function number(v){return v===null||v===undefined||!Number.isFinite(Number(v))?'—':new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1}).format(Number(v));}
+  function ageLabel(minutes){if(!Number.isFinite(Number(minutes)))return '—';if(minutes<60)return `${Math.max(0,Math.round(minutes))}m`;if(minutes<1440)return `${(minutes/60).toFixed(1)}h`;return `${(minutes/1440).toFixed(1)}d`;}
+  function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function filteredTokens(){
+    const min=Number(settings.minLiquidity)||0,max=Number(settings.maxFdv)||Infinity,maxAge=(Number(settings.maxAge)||Infinity)*60;
+    return state.tokens.filter(t=>{
+      if(settings.chain!=='all'&&String(t.chainId||'').toLowerCase()!==settings.chain)return false;
+      if(!Number.isFinite(Number(t.liquidityUsd))||Number(t.liquidityUsd)<min)return false;
+      if(!Number.isFinite(Number(t.fdv))||Number(t.fdv)>max)return false;
+      if(!Number.isFinite(Number(t.pairAgeMinutes))||Number(t.pairAgeMinutes)>maxAge)return false;
+      if(settings.requireAudit&&t.audit?.status!=='pass')return false;
+      return true;
+    });
+  }
+  function auditClass(a){return a?.status==='pass'?'pass':a?.status==='fail'?'fail':'pending';}
+  function render(){
+    const tokens=filteredTokens();
+    $('matches').textContent=number(tokens.length);
+    $('audits').textContent=number(state.tokens.filter(t=>t.audit?.status==='pass').length);
+    $('tableCount').textContent=`${tokens.length} MATCHES`;
+    if(!tokens.length){$('tokenRows').innerHTML='<tr><td colspan="9"><div class="empty"><strong>No tokens match your filters</strong>Try relaxing filters or wait for the next real discovery cycle.</div></td></tr>';return;}
+    $('tokenRows').innerHTML=tokens.slice(0,200).map(t=>{
+      const audit=t.audit||{status:'unknown',provider:'Not checked',reason:'No audit result'};
+      const chart=typeof t.url==='string'&&/^https:\/\/dexscreener\.com\//i.test(t.url)?t.url:null;
+      return `<tr><td><div class="token"><div class="coinicon">${esc((t.symbol||t.name||'?').slice(0,3).toUpperCase())}</div><div><b>${esc(t.name||'Unknown token')} <span style="color:#8b9bb5">${esc(t.symbol||'')}</span></b><small title="${esc(t.address)}">${esc(t.address||'')}</small></div></div></td><td><span class="chain">${esc(t.chainId||'unknown')}</span></td><td>${money(t.liquidityUsd)}</td><td>${money(t.fdv)}</td><td>${ageLabel(t.pairAgeMinutes)}</td><td>${money(t.volumeH24)}</td><td>${number(t.txnsH24)}</td><td><span class="audit ${auditClass(audit)}" title="${esc(audit.reason||'')}">${esc(String(audit.status||'unknown').toUpperCase())}</span><small style="display:block;color:#7f90aa;margin-top:4px">${esc(audit.provider||'')}</small></td><td>${chart?`<a href="${esc(chart)}" target="_blank" rel="noopener noreferrer">Open chart ↗</a>`:'Unavailable'}</td></tr>`;
+    }).join('');
+  }
+  function addLog(entry){
+    const id=entry.id||`${entry.timestamp||''}:${entry.message||''}`;
+    if(state.seenLogIds.has(id))return;
+    state.seenLogIds.add(id);state.logs.push(entry);if(state.logs.length>500)state.logs.shift();
+    const c=$('console');if(state.logs.length===1)c.innerHTML='';
+    const el=document.createElement('div');el.className='log';
+    const ts=entry.timestamp?new Date(entry.timestamp):new Date();
+    const kind=String(entry.level||'info').toLowerCase();
+    const kindClass=kind==='error'?'bad':kind==='warn'?'warn':kind==='pass'||kind==='success'?'good':'';
+    el.innerHTML=`<time>${esc(ts.toLocaleTimeString())}</time><span class="kind ${kindClass}">${esc(kind.toUpperCase())}</span><span class="msg">${esc(entry.message||JSON.stringify(entry))}</span>`;
+    c.appendChild(el);while(c.children.length>500)c.removeChild(c.firstChild);c.scrollTop=c.scrollHeight;
+  }
+  async function sendEmailJs(token){
+    if(!settings.emailPublic||!settings.emailService||!settings.emailTemplate||!settings.emailTo)return;
+    try{const response=await fetch('https://api.emailjs.com/api/v1.0/email/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({service_id:settings.emailService,template_id:settings.emailTemplate,user_id:settings.emailPublic,template_params:{to_email:settings.emailTo,token_name:token.name||'',token_symbol:token.symbol||'',token_address:token.address||'',chain:token.chainId||'',liquidity_usd:token.liquidityUsd??'',fdv_usd:token.fdv??'',pair_age_minutes:token.pairAgeMinutes??'',audit_status:token.audit?.status||'unknown',chart_url:token.url||''}})});if(!response.ok)throw new Error(`EmailJS HTTP ${response.status}`);addLog({level:'success',message:`EmailJS alert sent for ${token.name||token.address}.`});}catch(e){addLog({level:'warn',message:`EmailJS alert failed: ${e.message}`});}
+  }
+  async function playAlert(){
+    if(!settings.sound)return;
+    try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const ctx=new C();const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';osc.frequency.setValueAtTime(880,ctx.currentTime);osc.frequency.setValueAtTime(1174,ctx.currentTime+.12);gain.gain.setValueAtTime(.0001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.12,ctx.currentTime+.02);gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.32);osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+.34);osc.onended=()=>ctx.close();}catch{}
+  }
+  function setConnection(ok,text){$('liveDot').classList.toggle('live',ok);$('connectionStatus').textContent=text;}
+  async function connect(){
+    readSettings();const base=String(settings.apiBase||'').trim().replace(/\/+$/,'');
+    if(!base){setConnection(false,'Worker URL required');addLog({level:'warn',message:'Enter the base URL of the running worker API.'});return;}
+    setConnection(false,'Connecting…');
+    try{
+      const res=await fetch(base+'/api/status',{headers:apiHeaders(),cache:'no-store'});
+      if(!res.ok)throw new Error(`Worker returned HTTP ${res.status}`);
+      const status=await res.json();
+      setConnection(true,'Worker connected');
+      $('pollSource').textContent='DEX Screener + security APIs';
+      addLog({level:'success',message:`Connected to worker. Poll interval: ${status.pollIntervalMs||15000} ms.`});
+      await refresh();
+      if(state.timer)clearInterval(state.timer);
+      state.timer=setInterval(refresh,10000);
+    }catch(e){setConnection(false,'Connection failed');addLog({level:'error',message:`Could not connect: ${e.message}. Check worker URL, CORS and deployment status.`});}
+  }
+  function apiHeaders(){const h={'Accept':'application/json'};if(settings.apiToken)h.Authorization='Bearer '+settings.apiToken;return h;}
+  async function refresh(){
+    const base=String(settings.apiBase||'').trim().replace(/\/+$/,'');if(!base)return;
+    try{
+      const [sr,lr]=await Promise.all([fetch(base+'/api/tokens',{headers:apiHeaders(),cache:'no-store'}),fetch(base+'/api/logs?limit=100',{headers:apiHeaders(),cache:'no-store'})]);
+      if(!sr.ok||!lr.ok)throw new Error(`HTTP ${!sr.ok?sr.status:lr.status}`);
+      const data=await sr.json(),logs=await lr.json();
+      const oldIds=new Set(state.tokens.map(t=>t.address));
+      state.tokens=Array.isArray(data.tokens)?data.tokens:[];
+      state.discovered=Number(data.discoveredCount)||state.tokens.length;
+      $('discovered').textContent=number(state.discovered);
+      $('lastPoll').textContent=data.lastPollAt?new Date(data.lastPollAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—';
+      $('pollSource').textContent=data.lastPollAt?'Last worker poll':'Waiting for first poll';
+      setConnection(true,'Worker connected');
+      (logs.logs||[]).forEach(addLog);
+      const newGood=state.tokens.some(t=>!oldIds.has(t.address)&&t.audit?.status==='pass');
+      if(newGood){playAlert();for(const t of state.tokens.filter(t=>!oldIds.has(t.address)&&t.audit?.status==='pass'&&t.filterResult?.overallPass))sendEmailJs(t);}
+      render();
+    }catch(e){setConnection(false,'Worker unavailable');addLog({level:'error',message:`Refresh failed: ${e.message}`});}
+  }
+  $('apply').addEventListener('click',()=>{readSettings();render();addLog({level:'info',message:'Client-side display filters applied. Worker discovery and audit processing remain server-side.'});});
+  $('clear').addEventListener('click',()=>{Object.assign(settings,defaultSettings);loadSettings();readSettings();render();});
+  $('connect').addEventListener('click',connect);$('refresh').addEventListener('click',refresh);
+  $('saveSettings').addEventListener('click',()=>{readSettings();addLog({level:'success',message:'Browser settings saved locally.'});});
+  $('clearLogs').addEventListener('click',()=>{$('console').innerHTML='';state.logs=[];state.seenLogIds.clear();});
+  loadSettings();
+  // Apply loaded settings immediately, without pretending a worker is running.
+  render();
+})();
+</script>
+</body></html>
